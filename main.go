@@ -114,7 +114,6 @@ func loadingIndicator(done chan bool) {
 			fmt.Print("\r                                 \r")
 			return
 		default:
-			// Print a spinning character and flush stdout
 			for _, char := range chars {
 				fmt.Printf("\rGenerating trivia questions... %c", char)
 				time.Sleep(100 * time.Millisecond)
