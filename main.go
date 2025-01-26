@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -23,11 +24,12 @@ type TriviaResponse struct {
 }
 
 func main() {
+	log.SetFlags(0)
+
 	apiKey := setApiKey()
 
 	mainPrompt := generatePrompt()
 
-	// create OpenAI client
 	client := openai.NewClient(option.WithAPIKey(apiKey))
 
 	// create a channel to signal when to stop the loading indicator
@@ -41,7 +43,6 @@ func main() {
 	// stop the loading indicator
 	done <- true
 
-	// convert JSON to struct
 	var trivia TriviaResponse
 	err := json.Unmarshal([]byte(completion.Choices[0].Message.Content), &trivia)
 	if err != nil {
@@ -52,16 +53,22 @@ func main() {
 }
 
 func setApiKey() string {
-	// load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v\n", err)
+	var apiKeyFlag string
+	flag.StringVar(&apiKeyFlag, "apiKey", "", "OpenAI API key")
+	flag.Parse()
+
+	if apiKeyFlag != "" {
+		return apiKeyFlag
 	}
 
-	// set OpenAI API key
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		log.Fatal("OPENAI_API_KEY is not set")
+		log.Fatal("OPENAI_API_KEY environment variable not set")
 	}
 
 	return apiKey
@@ -102,7 +109,7 @@ func generateCompletion(ctx context.Context, client *openai.Client, prompt strin
 	return chatCompletion
 }
 
-// loadingIndicator prints a spinning indicator until receiving a signal to stop
+// prints a spinning indicator until receiving a signal to stop
 func loadingIndicator(done chan bool) {
 	// spinner animation characters
 	chars := []rune{'|', '/', '-', '\\'}
@@ -140,7 +147,8 @@ func isCorrectAnswer(userGuess, correctAnswer string) bool {
 		return true
 	}
 
-	// use fuzzy matching as a fallback
+	// use Jaro-Winkler distance to compare the user's guess to the correct answer
+	// the comparison is forgiving of simple typos and misspellings, etc
 	return smetrics.JaroWinkler(normalizedUserGuess, normalizedCorrectAnswer, 0.7, 4) > 0.85
 }
 
@@ -164,8 +172,6 @@ func runTriviaGame(questions, answers []string) {
 				fmt.Printf("\nIncorrect. The answer was %s\n", correctAnswer)
 			}
 		} else {
-			// use Jaro-Winkler distance to compare the user's guess to the correct answer
-			// the comparison is forgiving of simple typos and misspellings, etc
 			if isCorrectAnswer(userGuess, correctAnswer) {
 				fmt.Println("\nCorrect!")
 				score++
