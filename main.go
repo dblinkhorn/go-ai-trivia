@@ -132,8 +132,15 @@ func loadingIndicator(done chan bool) {
 func getUserInput(prompt string) string {
 	fmt.Print(prompt)
 	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	return scanner.Text()
+
+	for {
+		scanner.Scan()
+		input := scanner.Text()
+		if input != "" {
+			return input
+		}
+		fmt.Print("Input cannot be empty. Try again: ")
+	}
 }
 
 func isCorrectAnswer(userGuess, correctAnswer string) bool {
