@@ -77,7 +77,7 @@ func setApiKey() string {
 func generatePrompt() string {
 	// get the trivia topic from the user
 	topicPrompt := "Enter a topic for your trivia questions, or leave blank for random topics: "
-	userTopic := getUserInput(topicPrompt)
+	userTopic := getUserInput(topicPrompt, true)
 	if userTopic == "" {
 		userTopic = "random topics"
 	}
@@ -129,14 +129,19 @@ func loadingIndicator(done chan bool) {
 	}
 }
 
-func getUserInput(prompt string) string {
+func getUserInput(prompt string, allowEmpty ...bool) string {
 	fmt.Print(prompt)
 	scanner := bufio.NewScanner(os.Stdin)
+
+	enforceNonEmpty := false // Default to false (meaning empty input is NOT allowed)
+	if len(allowEmpty) > 0 {
+		enforceNonEmpty = allowEmpty[0]
+	}
 
 	for {
 		scanner.Scan()
 		input := scanner.Text()
-		if input != "" {
+		if input != "" || enforceNonEmpty {
 			return input
 		}
 		fmt.Print("Input cannot be empty. Try again: ")
@@ -166,7 +171,7 @@ func runTriviaGame(questions, answers []string) {
 	// ask the user to answer the trivia questions one by one
 	fmt.Println("\nTrivia Questions:")
 	for i, question := range questions {
-		userGuess := getUserInput(fmt.Sprintf("\nQuestion %d: %s\nEnter your guess: ", i+1, question))
+		userGuess := getUserInput(fmt.Sprintf("\nQuestion %d: %s\nEnter your guess: ", i+1, question), false)
 		correctAnswer := answers[i]
 
 		// check if the correct answer is numeric
