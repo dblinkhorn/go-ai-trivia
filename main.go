@@ -129,19 +129,14 @@ func loadingIndicator(done chan bool) {
 	}
 }
 
-func getUserInput(prompt string, allowEmpty ...bool) string {
+func getUserInput(prompt string, allowEmpty bool) string {
 	fmt.Print(prompt)
 	scanner := bufio.NewScanner(os.Stdin)
-
-	enforceNonEmpty := false // Default to false (meaning empty input is NOT allowed)
-	if len(allowEmpty) > 0 {
-		enforceNonEmpty = allowEmpty[0]
-	}
 
 	for {
 		scanner.Scan()
 		input := scanner.Text()
-		if input != "" || enforceNonEmpty {
+		if input != "" || allowEmpty {
 			return input
 		}
 		fmt.Print("Input cannot be empty. Try again: ")
