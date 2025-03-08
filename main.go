@@ -37,6 +37,7 @@ func main() {
 			apiKey = *cliApiKey
 		} else {
 			fmt.Println("No API key provided. Please set the API key in the config file or use the -apikey flag.")
+			panic("No API Key")
 		}
 	} else {
 		apiKey = setApiKey()
