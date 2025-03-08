@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/spf13/viper"
 	"github.com/xrash/smetrics"
 )
 
@@ -25,8 +25,23 @@ type TriviaResponse struct {
 
 func main() {
 	log.SetFlags(0)
+	cliApiKey := flag.String("apiKey", "", "API key (overrides config file)")
+	flag.Parse()
+	configFile := "config.json"
+	apiKey := ""
 
-	apiKey := setApiKey()
+	// Check if the file exists
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		fmt.Printf("Config file %s does not exist.  I will use the api key flag\n", configFile)
+		if *cliApiKey != "" {
+			apiKey = *cliApiKey
+		} else {
+			fmt.Println("No API key provided. Please set the API key in the config file or use the -apikey flag.")
+			panic("No API Key")
+		}
+	} else {
+		apiKey = setApiKey()
+	}
 
 	mainPrompt := generatePrompt()
 
@@ -53,23 +68,15 @@ func main() {
 }
 
 func setApiKey() string {
-	var apiKeyFlag string
-	flag.StringVar(&apiKeyFlag, "apiKey", "", "OpenAI API key")
-	flag.Parse()
-
-	if apiKeyFlag != "" {
-		return apiKeyFlag
-	}
-
-	err := godotenv.Load()
+	viper.SetConfigName("config") // Name of config file without extension
+	viper.SetConfigType("json")   // Type of config file
+	viper.AddConfigPath(".")      // Path to look for the config file
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Println("Error reading config file:", err)
+		panic(err)
 	}
-
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		log.Fatal("OPENAI_API_KEY environment variable not set")
-	}
+	apiKey := viper.GetString("apikey")
 
 	return apiKey
 }
