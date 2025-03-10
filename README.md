@@ -16,7 +16,7 @@ An interactive command-line trivia game powered by OpenAI's GPT model. The progr
    ```
 
 3. Set up your OpenAI API key either:
-   - Create a `config.json` file with `{"apikey": "your-api-key-from-config"}`
+   - Create a `config.json` file with `{"apiKey": "your-api-key-from-config"}`
    - Or provide it via command line flag:
       ```bash
       go run main.go --apiKey=your-api-key
